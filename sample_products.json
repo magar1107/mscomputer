@@ -1,0 +1,52 @@
+[
+  {
+    "nameMarathi": "लेनोव्हो आयडिया पॅड 3",
+    "nameEnglish": "Lenovo IdeaPad 3",
+    "price": 28500,
+    "category": "लॅपटॉप",
+    "descriptionMarathi": "15.6 इंच, i5, 8GB RAM, 512GB SSD",
+    "descriptionEnglish": "15.6 inch, i5, 8GB RAM, 512GB SSD",
+    "inStock": true,
+    "imageUrl": "https://drive.google.com/uc?id=1cagxbEJpB8e2yO8FSVXJfxjk07QTFxBV"
+  },
+  {
+    "nameMarathi": "एचपी पॅव्हिलियन x360",
+    "nameEnglish": "HP Pavilion x360",
+    "price": 42000,
+    "category": "लॅपटॉप",
+    "descriptionMarathi": "14 इंच टचस्क्रीन, i3, 8GB RAM, 256GB SSD",
+    "descriptionEnglish": "14 inch touchscreen, i3, 8GB RAM, 256GB SSD",
+    "inStock": true,
+    "imageUrl": "https://drive.google.com/uc?id=1example_image_id_2"
+  },
+  {
+    "nameMarathi": "डेल इंस्पिरॉन 15",
+    "nameEnglish": "Dell Inspiron 15",
+    "price": 38000,
+    "category": "लॅपटॉप",
+    "descriptionMarathi": "15.6 इंच, i5, 8GB RAM, 1TB HDD",
+    "descriptionEnglish": "15.6 inch, i5, 8GB RAM, 1TB HDD",
+    "inStock": false,
+    "imageUrl": "https://drive.google.com/uc?id=1example_image_id_3"
+  },
+  {
+    "nameMarathi": "हीरो प्रिंटर",
+    "nameEnglish": "Hero Printer",
+    "price": 8500,
+    "category": "प्रिंटर",
+    "descriptionMarathi": "काळा आणि पांढरा प्रिंटर, यूएसबी कनेक्शन",
+    "descriptionEnglish": "Black and white printer, USB connection",
+    "inStock": true,
+    "imageUrl": "https://drive.google.com/uc?id=1example_image_id_4"
+  },
+  {
+    "nameMarathi": "सीपी प्लस सीसीटीव्ही कॅमेरा",
+    "nameEnglish": "CP Plus CCTV Camera",
+    "price": 2500,
+    "category": "सीसीटीव्ही",
+    "descriptionMarathi": "2MP, नाईट व्हिजन, इनडोर/आउटडोर",
+    "descriptionEnglish": "2MP, Night vision, Indoor/Outdoor",
+    "inStock": true,
+    "imageUrl": "https://drive.google.com/uc?id=1example_image_id_5"
+  }
+]

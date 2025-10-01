@@ -1,0 +1,56 @@
+[
+  {
+    "id": "product1",
+    "name_marathi": "लेनोव्हो आयडिया पॅड 3",
+    "price": 28500,
+    "category": "लॅपटॉप",
+    "description_marathi": "15.6 इंच, i5, 8GB RAM, 512GB SSD",
+    "inStock": true,
+    "imageUrl": "https://firebasestorage.googleapis.com/v0/b/your-project-id.appspot.com/o/products%2Flenovo-ideapad.jpg?alt=media"
+  },
+  {
+    "id": "product2",
+    "name_marathi": "एचपी पॅव्हिलियन x360",
+    "price": 42000,
+    "category": "लॅपटॉप",
+    "description_marathi": "14 इंच टचस्क्रीन, i3, 8GB RAM, 256GB SSD",
+    "inStock": true,
+    "imageUrl": "https://firebasestorage.googleapis.com/v0/b/your-project-id.appspot.com/o/products%2Fhp-pavilion.jpg?alt=media"
+  },
+  {
+    "id": "product3",
+    "name_marathi": "हीरो प्रिंटर",
+    "price": 8500,
+    "category": "प्रिंटर",
+    "description_marathi": "काळा आणि पांढरा प्रिंटर, यूएसबी कनेक्शन",
+    "inStock": true,
+    "imageUrl": "https://firebasestorage.googleapis.com/v0/b/your-project-id.appspot.com/o/products%2Fhero-printer.jpg?alt=media"
+  },
+  {
+    "id": "product4",
+    "name_marathi": "सीपी प्लस सीसीटीव्ही कॅमेरा",
+    "price": 2500,
+    "category": "सीसीटीव्ही",
+    "description_marathi": "2MP, नाईट व्हिजन, इनडोर/आउटडोर",
+    "inStock": true,
+    "imageUrl": "https://firebasestorage.googleapis.com/v0/b/your-project-id.appspot.com/o/products%2Fcctv-camera.jpg?alt=media"
+  },
+  {
+    "id": "product5",
+    "name_marathi": "एसएसडी 512GB",
+    "price": 3500,
+    "category": "एसएसडी / हार्ड डिस्क",
+    "description_marathi": "सॅमसंग 512GB SSD, SATA इंटरफेस",
+    "inStock": false,
+    "imageUrl": "https://firebasestorage.googleapis.com/v0/b/your-project-id.appspot.com/o/products%2Fssd-512gb.jpg?alt=media"
+  },
+  {
+    "id": "product6",
+    "name_marathi": "कीबोर्ड आणि माऊस सेट",
+    "price": 1200,
+    "category": "अ‍ॅक्सेसरीज",
+    "description_marathi": "वायर्ड कीबोर्ड आणि माऊस, USB कनेक्शन",
+    "inStock": true,
+    "imageUrl": "https://firebasestorage.googleapis.com/v0/b/your-project-id.appspot.com/o/products%2Fkeyboard-mouse.jpg?alt=media"
+  }
+]

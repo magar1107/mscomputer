@@ -1,0 +1,27 @@
+// firestore.rules
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow read access to all collections for your web app
+    match /{document=**} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Specific rules for your collections
+    match /banners/{document} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /products/{document} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /contact/{document} {
+      allow read: if true;
+      allow write: if false;
+    }
+  }
+}

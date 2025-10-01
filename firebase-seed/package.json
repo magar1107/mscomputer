@@ -1,0 +1,22 @@
+{
+  "name": "firestore-seed",
+  "version": "1.0.0",
+  "description": "Firebase Firestore data seeding script for MS Computer Sangola",
+  "main": "seed.js",
+  "scripts": {
+    "seed": "node seed.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "firebase",
+    "firestore",
+    "seed",
+    "data-import"
+  ],
+  "author": "MS Computer Sangola",
+  "license": "MIT",
+  "dependencies": {
+    "firebase-admin": "^12.7.0"
+  },
+  "type": "commonjs"
+}
