@@ -2,14 +2,14 @@
   "version": 2,
   "builds": [
     {
-      "src": "**",
+      "src": "build/web/**",
       "use": "@vercel/static"
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "/$1"
+      "dest": "/index.html"
     }
   ],
   "buildCommand": "flutter build web --release",
