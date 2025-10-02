@@ -23,4 +23,14 @@ class ContactInfo {
       whatsappNumber: data['whatsappNumber'] ?? '',
     );
   }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'address_marathi': addressMarathi,
+      'phone1': phone1,
+      'phone2': phone2,
+      'instagramUrl': instagramUrl,
+      'whatsappNumber': whatsappNumber,
+    };
+  }
 }

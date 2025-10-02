@@ -1,8 +1,11 @@
 // lib/services/firebase_service.dart
+// 🔥 FIRESTORE ONLY - Handles all document data (products, banners, contact)
+// 📸 Images are handled separately by StorageService (Firebase Storage)
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:mscomputersangola/models/product.dart';
 import 'package:mscomputersangola/models/banner.dart';
 import 'package:mscomputersangola/models/contact.dart';
+import 'package:mscomputersangola/models/order.dart';
 
 class FirebaseService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -108,5 +111,131 @@ class FirebaseService {
       }
       return null;
     });
+  }
+
+  // Add new product
+  Future<String> addProduct(Product product) async {
+    try {
+      DocumentReference docRef = await _firestore.collection('products').add(product.toMap());
+      return docRef.id;
+    } catch (e) {
+      print('Error adding product: $e');
+      throw e;
+    }
+  }
+
+  // Update product
+  Future<void> updateProduct(String productId, Product product) async {
+    try {
+      await _firestore.collection('products').doc(productId).update(product.toMap());
+    } catch (e) {
+      print('Error updating product: $e');
+      throw e;
+    }
+  }
+
+  // Delete product
+  Future<void> deleteProduct(String productId) async {
+    try {
+      await _firestore.collection('products').doc(productId).delete();
+    } catch (e) {
+      print('Error deleting product: $e');
+      throw e;
+    }
+  }
+
+  // Update banner
+  Future<void> updateBanner(BannerData banner) async {
+    try {
+      await _firestore.collection('banners').doc('homepage').set(banner.toMap());
+    } catch (e) {
+      print('Error updating banner: $e');
+      throw e;
+    }
+  }
+
+  // Update contact info
+  Future<void> updateContact(ContactInfo contact) async {
+    try {
+      await _firestore.collection('contact').doc('info').set(contact.toMap());
+    } catch (e) {
+      print('Error updating contact: $e');
+      throw e;
+    }
+  }
+
+  // ============== ORDER MANAGEMENT ==============
+
+  // Add new order
+  Future<String> addOrder(CustomerOrder order) async {
+    try {
+      DocumentReference docRef = await _firestore.collection('orders').add(order.toMap());
+      return docRef.id;
+    } catch (e) {
+      print('Error adding order: $e');
+      throw e;
+    }
+  }
+
+  // Get all orders
+  Future<List<CustomerOrder>> getAllOrders() async {
+    try {
+      QuerySnapshot snapshot = await _firestore
+          .collection('orders')
+          .orderBy('createdAt', descending: true)
+          .get();
+      return snapshot.docs.map((doc) =>
+        CustomerOrder.fromFirestore(doc.data() as Map<String, dynamic>, doc.id)
+      ).toList();
+    } catch (e) {
+      print('Error fetching orders: $e');
+      return [];
+    }
+  }
+
+  // Get orders by status
+  Future<List<CustomerOrder>> getOrdersByStatus(String status) async {
+    try {
+      QuerySnapshot snapshot = await _firestore
+          .collection('orders')
+          .where('status', isEqualTo: status)
+          .orderBy('createdAt', descending: true)
+          .get();
+      return snapshot.docs.map((doc) =>
+        CustomerOrder.fromFirestore(doc.data() as Map<String, dynamic>, doc.id)
+      ).toList();
+    } catch (e) {
+      print('Error fetching orders by status: $e');
+      return [];
+    }
+  }
+
+  // Stream for real-time order updates
+  Stream<List<CustomerOrder>> getOrdersStream() {
+    return _firestore.collection('orders').orderBy('createdAt', descending: true).snapshots().map((snapshot) =>
+      snapshot.docs.map((doc) =>
+        CustomerOrder.fromFirestore(doc.data(), doc.id)
+      ).toList()
+    );
+  }
+
+  // Update order status
+  Future<void> updateOrderStatus(String orderId, String status) async {
+    try {
+      await _firestore.collection('orders').doc(orderId).update({'status': status});
+    } catch (e) {
+      print('Error updating order status: $e');
+      throw e;
+    }
+  }
+
+  // Delete order
+  Future<void> deleteOrder(String orderId) async {
+    try {
+      await _firestore.collection('orders').doc(orderId).delete();
+    } catch (e) {
+      print('Error deleting order: $e');
+      throw e;
+    }
   }
 }

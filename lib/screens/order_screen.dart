@@ -2,6 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:mscomputersangola/widgets/custom_app_bar.dart';
+import 'package:mscomputersangola/services/firebase_service.dart';
+import 'package:mscomputersangola/models/order.dart';
 
 class OrderScreen extends StatefulWidget {
   const OrderScreen({super.key});
@@ -16,33 +18,71 @@ class _OrderScreenState extends State<OrderScreen> {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _productController = TextEditingController();
   final TextEditingController _messageController = TextEditingController();
+  final FirebaseService _firebaseService = FirebaseService();
+  bool _isSubmitting = false;
 
   Future<void> _submitOrder() async {
     if (_formKey.currentState!.validate()) {
+      setState(() => _isSubmitting = true);
+
       String name = _nameController.text;
       String phone = _phoneController.text;
       String product = _productController.text;
       String message = _messageController.text;
 
-      String whatsappMessage = 'Hi, I want to order:\n\n'
-          'Name: $name\n'
-          'Phone: $phone\n'
-          'Product: $product\n'
-          'Message: $message\n\n'
-          'Please contact me for further details.';
+      try {
+        // First, save the order to Firebase
+        CustomerOrder newOrder = CustomerOrder(
+          id: '', // Will be set by Firebase
+          customerName: name,
+          customerPhone: phone,
+          product: product,
+          message: message.isEmpty ? null : message,
+          createdAt: DateTime.now(),
+          status: 'pending',
+        );
 
-      String phoneNumber = '+918788028134'; // Default WhatsApp number
-      final Uri url = Uri.parse('https://wa.me/$phoneNumber?text=${Uri.encodeComponent(whatsappMessage)}');
+        String orderId = await _firebaseService.addOrder(newOrder);
+        print('✅ Order saved to Firebase with ID: $orderId');
 
-      if (await canLaunchUrl(url)) {
-        await launchUrl(url);
-      } else {
+        // Then, send to WhatsApp
+        String whatsappMessage = 'Hi, I want to order:\n\n'
+            'Name: $name\n'
+            'Phone: $phone\n'
+            'Product: $product\n'
+            'Message: $message\n\n'
+            'Please contact me for further details.';
+
+        String phoneNumber = '+918788028134'; // Default WhatsApp number
+        final Uri url = Uri.parse('https://wa.me/$phoneNumber?text=${Uri.encodeComponent(whatsappMessage)}');
+
+        if (await canLaunchUrl(url)) {
+          await launchUrl(url);
+          // Show success message
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('✅ Order submitted successfully! WhatsApp will open shortly.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Could not open WhatsApp. Order saved - please contact us directly.'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      } catch (e) {
+        print('❌ Error submitting order: $e');
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Could not open WhatsApp. Please contact us directly.'),
+          SnackBar(
+            content: Text('Error submitting order: $e'),
             backgroundColor: Colors.red,
           ),
         );
+      } finally {
+        setState(() => _isSubmitting = false);
       }
     }
   }
@@ -148,7 +188,7 @@ class _OrderScreenState extends State<OrderScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: _submitOrder,
+                  onPressed: _isSubmitting ? null : _submitOrder,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFCC0000), // MS Red
                     foregroundColor: Colors.white,
@@ -157,10 +197,19 @@ class _OrderScreenState extends State<OrderScreen> {
                       borderRadius: BorderRadius.circular(25),
                     ),
                   ),
-                  child: const Text(
-                    'Send Order via WhatsApp',
-                    style: TextStyle(fontSize: 16),
-                  ),
+                  child: _isSubmitting
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : const Text(
+                          'Send Order via WhatsApp',
+                          style: TextStyle(fontSize: 16),
+                        ),
                 ),
               ),
 

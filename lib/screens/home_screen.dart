@@ -1,13 +1,16 @@
 // lib/screens/home_screen.dart
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mscomputersangola/services/auth_service.dart';
 import 'package:mscomputersangola/services/firebase_service.dart';
 import 'package:mscomputersangola/services/mock_data_service.dart';
 import 'package:mscomputersangola/models/banner.dart';
 import 'package:mscomputersangola/models/product.dart';
 import 'package:mscomputersangola/models/contact.dart';
 import 'package:mscomputersangola/widgets/custom_app_bar.dart';
+import 'package:mscomputersangola/screens/admin_dashboard.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -18,6 +21,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final FirebaseService _firebaseService = FirebaseService();
+  final AuthService _authService = AuthService();
   BannerData? _bannerData;
   List<Product> _products = [];
   ContactInfo? _contactInfo;
@@ -31,45 +35,109 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _setupRealtimeListeners() {
-    // Listen to real-time product updates
+    print('🔄 Setting up real-time listeners for anonymous users...');
+
+    // Listen to real-time product updates (works for all users)
     _firebaseService.getProductsStream().listen((products) {
+      print('📦 Received ${products.length} products from Firestore stream');
       if (mounted) {
         setState(() {
           _products = products;
+          _isLoading = false; // Ensure loading state is cleared
         });
         // Debug: Print image URLs to check if Firebase is providing valid URLs
         for (var product in products) {
           print('Product: ${product.nameMarathi}, ImageURL: ${product.imageUrl}');
         }
       }
+    }, onError: (error) {
+      print('❌ Error in products stream: $error');
     });
 
     // Listen to real-time banner updates
     _firebaseService.getBannerStream().listen((banner) {
+      print('📢 Received banner data from Firestore stream');
       if (mounted) {
         setState(() {
           _bannerData = banner;
         });
       }
+    }, onError: (error) {
+      print('❌ Error in banner stream: $error');
     });
 
     // Listen to real-time contact updates
     _firebaseService.getContactStream().listen((contact) {
+      print('📞 Received contact data from Firestore stream');
       if (mounted) {
         setState(() {
           _contactInfo = contact;
         });
       }
+    }, onError: (error) {
+      print('❌ Error in contact stream: $error');
     });
   }
 
   Future<void> _loadData() async {
+    print('🔄 Starting initial data load for anonymous users...');
     setState(() {
       _isLoading = true;
     });
 
     try {
       // Load initial data (will be replaced by real-time updates)
+      print('📡 Fetching banner data...');
+      final bannerFuture = _firebaseService.getBannerData();
+      print('📦 Fetching products data...');
+      final productsFuture = _firebaseService.getAllProducts();
+      print('📞 Fetching contact data...');
+      final contactFuture = _firebaseService.getContactInfo();
+
+      print('⏳ Waiting for all data to load...');
+      final results = await Future.wait([
+        bannerFuture,
+        productsFuture,
+        contactFuture,
+      ]);
+
+      print('✅ Initial data loaded successfully');
+      if (mounted) {
+        setState(() {
+          _bannerData = results[0] as BannerData?;
+          _products = results[1] as List<Product>;
+          _contactInfo = results[2] as ContactInfo?;
+          _isLoading = false;
+        });
+        print('📊 Loaded ${_products.length} products, banner: ${_bannerData != null}, contact: ${_contactInfo != null}');
+      }
+    } catch (e) {
+      // If Firebase fails, use mock data (real-time listeners will still work once connected)
+      print('❌ Firebase initial load failed: $e');
+      print('🔄 Falling back to mock data and relying on real-time listeners...');
+      if (mounted) {
+        setState(() {
+          _bannerData = MockDataService.getMockBannerData();
+          _products = MockDataService.getMockProducts();
+          _contactInfo = MockDataService.getMockContactInfo();
+          _isLoading = false;
+        });
+        print('📊 Using mock data: ${_products.length} products loaded');
+      }
+
+      // Retry Firebase fetch after a short delay for real-time listeners
+      print('⏰ Scheduling retry for real-time data...');
+      Future.delayed(const Duration(seconds: 3), () {
+        if (mounted) {
+          _retryFirebaseLoad();
+        }
+      });
+    }
+  }
+
+  Future<void> _retryFirebaseLoad() async {
+    try {
+      print('🔄 Retrying Firebase data load...');
       final bannerFuture = _firebaseService.getBannerData();
       final productsFuture = _firebaseService.getAllProducts();
       final contactFuture = _firebaseService.getContactInfo();
@@ -80,25 +148,18 @@ class _HomeScreenState extends State<HomeScreen> {
         contactFuture,
       ]);
 
+      print('✅ Retry successful - real-time data loaded');
       if (mounted) {
         setState(() {
           _bannerData = results[0] as BannerData?;
           _products = results[1] as List<Product>;
           _contactInfo = results[2] as ContactInfo?;
-          _isLoading = false;
         });
+        print('📊 Real-time retry loaded ${_products.length} products');
       }
     } catch (e) {
-      // If Firebase fails, use mock data (real-time listeners will still work once connected)
-      print('Firebase initial load failed, using mock data: $e');
-      if (mounted) {
-        setState(() {
-          _bannerData = MockDataService.getMockBannerData();
-          _products = MockDataService.getMockProducts();
-          _contactInfo = MockDataService.getMockContactInfo();
-          _isLoading = false;
-        });
-      }
+      print('❌ Retry Firebase load also failed: $e');
+      print('ℹ️ Real-time listeners should still work for future updates');
     }
   }
 
@@ -106,41 +167,45 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFAFAFA), // Crisp Off-White background
-      appBar: CustomAppBar(),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF00695C)), // Deep Teal
+      appBar: const CustomAppBar(),
+      body: RefreshIndicator(
+        onRefresh: _loadData,
+        color: const Color(0xFF0A4C80),
+        child: _isLoading
+            ? const Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF00695C)), // Deep Teal
+                ),
+              )
+            : SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  children: [
+                    _buildHeroSection(),
+
+                    // Category Grid Section - Card-based categories with hover effects
+                    _buildCategoryGrid(),
+
+                    // Brand Logos Section - Logo placeholders with hover animations
+                    _buildBrandLogos(),
+                    // Products Section - Featured products with enhanced styling
+                    _buildProductsSection(),
+
+                    // Services Section - Service cards with lift animations
+                    _buildServicesSection(),
+
+                    // EMI Banner Section - Moved under Home Delivery service
+                    _buildEmiBanner(),
+
+                    // Contact Section - Contact cards with enhanced buttons
+                    _buildContactSection(),
+
+                    // Footer - Enhanced footer design
+                    _buildFooter(),
+                  ],
+                ),
               ),
-            )
-          : SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Column(
-                children: [
-                  _buildHeroSection(),
-
-                  // Category Grid Section - Card-based categories with hover effects
-                  _buildCategoryGrid(),
-
-                  // Brand Logos Section - Logo placeholders with hover animations
-                  _buildBrandLogos(),
-                  // Products Section - Featured products with enhanced styling
-                  _buildProductsSection(),
-
-                  // Services Section - Service cards with lift animations
-                  _buildServicesSection(),
-
-                  // EMI Banner Section - Moved under Home Delivery service
-                  _buildEmiBanner(),
-
-                  // Contact Section - Contact cards with enhanced buttons
-                  _buildContactSection(),
-
-                  // Footer - Enhanced footer design
-                  _buildFooter(),
-                ],
-              ),
-            ),
+      ),
       floatingActionButton: Container(
         decoration: BoxDecoration(
           shape: BoxShape.circle,
@@ -556,12 +621,31 @@ class _HomeScreenState extends State<HomeScreen> {
               ? Center(
                   child: Container(
                     padding: const EdgeInsets.all(40),
-                    child: Text(
-                      'No products available',
-                      style: GoogleFonts.inter(
-                        fontSize: 16,
-                        color: Colors.grey.shade500,
-                      ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.inventory_2_outlined,
+                          size: 64,
+                          color: Colors.grey,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No products available',
+                          style: GoogleFonts.inter(
+                            fontSize: 16,
+                            color: Colors.grey.shade500,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Pull down to refresh',
+                          style: GoogleFonts.inter(
+                            fontSize: 14,
+                            color: Colors.grey.shade400,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 )
@@ -1251,7 +1335,124 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
+
+          // Admin Button (Right side)
+          Align(
+            alignment: Alignment.centerRight,
+            child: Container(
+              margin: const EdgeInsets.only(top: 16),
+              child: TextButton.icon(
+                onPressed: () => _showAdminLoginDialog(),
+                icon: const Icon(
+                  Icons.admin_panel_settings,
+                  color: Colors.white70,
+                  size: 16,
+                ),
+                label: Text(
+                  'Admin',
+                  style: GoogleFonts.inter(
+                    color: Colors.white.withOpacity(0.8),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.white.withOpacity(0.1),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+              ),
+            ),
+          ),
         ],
+      ),
+    );
+  }
+
+  // Admin Login Dialog
+  void _showAdminLoginDialog() {
+    TextEditingController emailController = TextEditingController(text: 'admin@mscomputersangola.com');
+    TextEditingController passwordController = TextEditingController();
+    bool _isLoading = false;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Admin Login'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: emailController,
+                decoration: const InputDecoration(
+                  labelText: 'Email',
+                  border: OutlineInputBorder(),
+                ),
+                readOnly: true, // Pre-filled with admin email
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: passwordController,
+                decoration: const InputDecoration(
+                  labelText: 'Password',
+                  border: OutlineInputBorder(),
+                ),
+                obscureText: true,
+              ),
+              if (_isLoading)
+                const Padding(
+                  padding: EdgeInsets.only(top: 16),
+                  child: CircularProgressIndicator(),
+                ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: _isLoading ? null : () async {
+                setState(() => _isLoading = true);
+
+                // Use Firebase Authentication
+                UserCredential? userCredential = await _authService.signInWithEmailPassword(
+                  emailController.text,
+                  passwordController.text,
+                );
+
+                if (userCredential != null) {
+                  // Check if user is admin
+                  if (_authService.isAdmin()) {
+                    Navigator.of(context).pop();
+                    // Navigate to admin panel
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (context) => const AdminDashboard()),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Access denied. Admin privileges required.')),
+                    );
+                  }
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Invalid credentials')),
+                  );
+                }
+
+                setState(() => _isLoading = false);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF0A4C80),
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Login'),
+            ),
+          ],
+        ),
       ),
     );
   }

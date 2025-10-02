@@ -17,4 +17,12 @@ class BannerData {
       isActive: data['isActive'] ?? false,
     );
   }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'title_marathi': titleMarathi,
+      'subtitle_marathi': subtitleMarathi,
+      'isActive': isActive,
+    };
+  }
 }
